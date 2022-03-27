@@ -2,38 +2,55 @@
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-kernel_size = 5
+import math 
+kernel_size = 3
 def sketch(image):
-    width , height = image.shape[ :2]
+    height , width = image.shape[ :2]
     imageC = image.copy()
-    for x in range(width):
-        for y in range(height):
+    for y in range(height):
+        for x in range(width):
             divK = kernel_size//2
-            if x-divK<0 or y-divK <0 or x+divK+1>=width or y+divK+1>=height:
-                randX= x-divK
-                ranpX = x+divK+1
-                randY = y-divK
-                ranpY = y+divK+1
+            if x-divK<0 or y-divK <0 or x+divK+1>width or y+divK+1>height:
+                lis= []
                 if x-divK<0:
                     dx = abs(x-divK)
-                    randX = randX+dx
+                    for i in range(dx):
+                        lis.append(imageC[y, x])    
                 if y-divK<0:
                     dy = abs(y-divK)
-                    randY = randY+dy
-                if x+divK+1>=width:
+                    for i in range(dy):
+                        lis.append(imageC[y, x]) 
+                if x+divK+1>width:
                     dx = x+divK+1-width
-                    ranpX = ranpX-dx
-                if y+divK+1>=height:
+                    for i in range(dx):
+                        lis.append(imageC[y, x]) 
+                if y+divK+1>height:
                     dy = y+divK+1-height
-                    ranpY = ranpY-dy
-                kernel = np.reshape(imageC[randX:ranpX, randY:ranpY], ((ranpX-randX)*(ranpY-randY)))
+                    for i in range(dy):
+                        lis.append(imageC[y, x]) 
+                for los1 in (-divK, divK+1, 1):
+                    for los2 in (-divK, divK+1, 1):
+                        try:
+                            lis.append(imageC[y-los1, x-los2])
+                        except:
+                            continue
+                
+                kernel = lis
             else:
-                kernel = np.reshape(imageC[x-divK:x+divK+1, y-divK:y+divK+1], (kernel_size**2))
+                lis = []
+                for los1 in (-divK, divK+1, 1):
+                    for los2 in (-divK, divK+1, 1):
+                        try:
+                            lis.append(imageC[y-los1, x-los2])
+                        except:
+                            continue
+                kernel = lis
             maximum = maximumFilter(kernel)
-            image[x, y] = 255*imageC[x, y]/maximum
+            image[y, x] = 255*imageC[y, x]/maximum
                     
     return image
-            
+
+
 def maximumFilter(kernel):
     return max(kernel)
     
@@ -54,8 +71,10 @@ image3 = cv2.GaussianBlur(image2.copy(), (5,5), 0)
 ret, image4 = cv2.threshold(image2, 0, 255, cv2.THRESH_TOZERO+cv2.THRESH_OTSU)
 
 kernel = np.ones((3, 3), dtype = "uint8" )
-image5 = cv2.dilate(image4, kernel,iterations=1)
+image5 = cv2.dilate(image4, kernel, iterations=1)
 image5 = cv2.erode(image5, kernel, iterations=1)
+
+ret, image6 = cv2.threshold(image2, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
 
 
@@ -70,7 +89,14 @@ plt.subplot(2,3,4)
 plt.imshow(image4, cmap = "gray")
 plt.subplot(2,3,5)
 plt.imshow(image5, cmap = "gray")
+plt.subplot(2,3,6)
+plt.imshow(image6, cmap = "gray")
 plt.show()
-
+cv2.imwrite("1.jpeg", image)
+cv2.imwrite("2.jpeg", image2)
+cv2.imwrite("3.jpeg", image3)
+cv2.imwrite("4.jpeg", image4)
+cv2.imwrite("5.jpeg", image5)
+cv2.imwrite("6.jpeg", image6)
 
 
